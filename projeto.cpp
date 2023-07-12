@@ -20,7 +20,7 @@ void passiveMotion(int x, int y) {
     float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
     float normalizedY = 1.0f - (float)y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 
-    std::cout << "Posição do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
+    //std::cout << "Posição do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
 }
 
 
@@ -193,8 +193,8 @@ void MouseOptions(int button, int state, int x, int y)
         Projectile newProjectile;
         newProjectile.posX = posX;
         newProjectile.posY = posY;
-        newProjectile.dirX = dx;    
-        newProjectile.dirY = dy;
+        newProjectile.dirX = dx - (posX/2);
+        newProjectile.dirY = dy - (posY/2);
         newProjectile.active = true;
         newProjectile.speed = 0.02f;
 
@@ -214,6 +214,10 @@ void MouseOptions(int button, int state, int x, int y)
         for (const auto& projectile : projectiles) {
             std::cout << "Projectile " << i++ << std::endl << "posX = " << projectile.posX << std::endl << "posY = " << projectile.posY << std::endl << "dirX = " << projectile.dirX << std::endl << "dirY = " << projectile.dirY << std::endl << "speed = " << projectile.speed << std::endl << "active = " << projectile.active << std::endl << std::endl;
         }
+        // Mouse position
+        std::cout << "Mouse position: x = " << dx << ", y = " << dy << std::endl;
+        // Cubo position
+        std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;
     }
 
     glutPostRedisplay();
