@@ -10,7 +10,8 @@
 int score = 0;
 int life = 3;
 
-struct Projectile {
+struct Projectile
+{
     GLfloat posX;
     GLfloat posY;
     GLfloat dirX;
@@ -19,7 +20,8 @@ struct Projectile {
     GLfloat speed;
 };
 
-struct Cube {
+struct Cube
+{
     GLfloat posX;
     GLfloat posY;
     GLfloat dirX;
@@ -34,7 +36,8 @@ std::vector<Cube> cubes;
 int previousTime = 0;
 
 // Fun��o de temporiza��o para limitar o FPS
-void timer(int value) {
+void timer(int value)
+{
     // Obt�m o tempo atual em milissegundos
     int currentTime = glutGet(GLUT_ELAPSED_TIME);
 
@@ -42,9 +45,11 @@ void timer(int value) {
     float deltaTime = (currentTime - previousTime) / 1000.0f; // Converter para segundos
 
     // Se passou menos de 1/60 segundos (16.67 ms), aguarda o tempo restante
-    if (deltaTime < 1.0f / 60.0f) {
+    if (deltaTime < 1.0f / 60.0f)
+    {
         int sleepTime = ((1.0f / 60.0f) - deltaTime) * 1000;
-        if (sleepTime > 0) {
+        if (sleepTime > 0)
+        {
             usleep(sleepTime * 1000);
         }
     }
@@ -66,19 +71,20 @@ GLfloat posX = 0.0f, posY = 0.0f;
 
 // Cores para cada face do cubole
 GLfloat colors[][3] = {
-    {1.0f, 0.0f, 0.0f},   // Vermelho
-    {1.0f, 0.5f, 0.0f},   // Laranja
-    {1.0f, 1.0f, 0.0f},   // Amarelo
-    {0.0f, 1.0f, 0.0f},   // Verde
-    {0.0f, 0.0f, 1.0f},   // Azul
-    {0.5f, 0.0f, 0.5f}    // Roxo
+    {1.0f, 0.0f, 0.0f}, // Vermelho
+    {1.0f, 0.5f, 0.0f}, // Laranja
+    {1.0f, 1.0f, 0.0f}, // Amarelo
+    {0.0f, 1.0f, 0.0f}, // Verde
+    {0.0f, 0.0f, 1.0f}, // Azul
+    {0.5f, 0.0f, 0.5f}  // Roxo
 };
 
-int colorIndex = 0;  // Índice da cor atual
-float colorChangeSpeed = 0.07f;  // Velocidade de mudança de cor
+int colorIndex = 0;             // Índice da cor atual
+float colorChangeSpeed = 0.07f; // Velocidade de mudança de cor
 float rainbowEffectTime = 0.0f; // Tempo para controlar a transição de cores
 
-void rainbowEffect() {
+void rainbowEffect()
+{
     // Atualiza o tempo para controlar a transição de cores
     rainbowEffectTime += colorChangeSpeed;
 
@@ -88,7 +94,8 @@ void rainbowEffect() {
     GLfloat blue = 0.5f + 0.5f * sin(rainbowEffectTime + 4.0f * M_PI / 3.0f);
 
     // Define as novas cores para o cubo
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i)
+    {
         colors[i][0] = red;
         colors[i][1] = green;
         colors[i][2] = blue;
@@ -98,37 +105,42 @@ void rainbowEffect() {
     glutPostRedisplay();
 }
 
-
-
-
 bool moveUp = false, moveDown = false, moveLeft = false, moveRight = false;
 
-float randomFloat() {
-   return -100.0f + (200.0f * rand()) / (RAND_MAX + 100.0f);
+float randomFloat()
+{
+    return -100.0f + (200.0f * rand()) / (RAND_MAX + 100.0f);
 }
 
 // Trecho destino a permiter o use v�rias teclas ao mesmo tempo
 bool buffer[256];
 
-void keyboard(unsigned char key, int x, int y) {
+void keyboard(unsigned char key, int x, int y)
+{
     buffer[key] = true;
 }
 
-void keyboardUp(unsigned char key, int x, int y) {
+void keyboardUp(unsigned char key, int x, int y)
+{
     buffer[key] = false;
 }
 
-void moveCube() {
-    if (buffer['w']) { // Move para cima
+void moveCube()
+{
+    if (buffer['w'] || buffer['W'])
+    { // Move para cima
         posY += 0.02f;
     }
-    if (buffer['s']) { // Move para baixo
+    if (buffer['s'] || buffer['S'])
+    { // Move para baixo
         posY -= 0.02f;
     }
-    if (buffer['a']) { // Move para a esquerda
+    if (buffer['a'] || buffer['A'])
+    { // Move para a esquerda
         posX -= 0.02f;
     }
-    if (buffer['d']) { // Move para a direita
+    if (buffer['d'] || buffer['D'])
+    { // Move para a direita
         posX += 0.02f;
     }
 }
@@ -137,21 +149,23 @@ GLfloat mouseX, mouseY;
 int windowWidth = 1280;
 int windowHeight = 720;
 
-void passiveMotion(int x, int y) {
+void passiveMotion(int x, int y)
+{
     // Atualiza as coordenadas do mouse
     mouseX = x;
     mouseY = y;
     std::cout << "Posi��o do mouse: x = " << x << ", y = " << y << std::endl;
-    
+
     // Normaliza as coordenadas do mouse para o intervalo entre -1 e 1
     float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
     float normalizedY = 1.0f - (float)y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 
-    //std::cout << "Posi��o do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
+    // std::cout << "Posi��o do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
 }
 
 float gunPosX, gunPosY;
-void drawGun() {
+void drawGun()
+{
     // Define as coordenadas da pistola em relação ao centro do cubo
     float gunOffsetX = 0.15f;
     float gunOffsetY = 0.0f;
@@ -161,9 +175,8 @@ void drawGun() {
     float mousePosY = 1.0f - static_cast<float>(mouseY) / static_cast<float>(windowHeight) * 2.0f;
 
     // Calcula o ângulo entre a pistola e a posição do mouse
-    GLfloat normPosX =(posX/6.25);
-    GLfloat normPosY =(posY/3.10);
-
+    GLfloat normPosX = (posX / 6.25);
+    GLfloat normPosY = (posY / 3.10);
 
     float angle = atan2(mousePosY - normPosY, mousePosX - normPosX);
 
@@ -178,10 +191,24 @@ void drawGun() {
     glColor3f(1.0f, 1.0f, 1.0f); // Cor da pistola (branco)
     glRectf(-0.05f, -0.02f, 0.15f, 0.02f);
     glPopMatrix();
+
+    if (score > 100)
+    {
+        // TODO
+        gunPosX = posX - gunOffsetX * cos(angle) - gunOffsetY * sin(angle);
+        gunPosY = posY - gunOffsetX * sin(angle) + gunOffsetY * cos(angle);
+        // Desenha outra arma só direção contrária (lado oposto ao mouse)
+        glPushMatrix();
+        glTranslatef(gunPosX, gunPosY, 0.0f);
+        glRotatef(angle * 180.0f / M_PI, 0.0f, 0.0f, 1.0f);
+        glColor3f(1.0f, 1.0f, 1.0f); // Cor da pistola (branco)
+        glRectf(0.05f, 0.02f, -0.15f, -0.02f);
+        glPopMatrix();
+    }
 }
 
-
-void drawCube() {
+void drawCube()
+{
     glPushMatrix();
     glTranslatef(posX, posY, 0.0f);
     glColor3fv(colors[colorIndex]);
@@ -189,14 +216,15 @@ void drawCube() {
 
     // Desenha o texto de vida acima do cubo
     glPushMatrix();
-    glTranslatef(-0.17f, 0.25f, 0.0f);  // Posição do texto acima do cubo
+    glTranslatef(-0.17f, 0.25f, 0.0f); // Posição do texto acima do cubo
     glPushAttrib(GL_CURRENT_BIT);
-    glColor3f(0.0f, 1.0f, 0.0f);  // Cor do texto (branco)
+    glColor3f(0.0f, 1.0f, 0.0f); // Cor do texto (branco)
 
-    std::string lifeText = "Life: " + std::to_string(life) ;  // Exemplo de texto de vida (substitua pelo valor real)
+    std::string lifeText = "Life: " + std::to_string(life); // Exemplo de texto de vida (substitua pelo valor real)
     glRasterPos3f(0.0f, 0.0f, 0.0f);
-    for (char c : lifeText) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);  // Fonte do texto
+    for (char c : lifeText)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c); // Fonte do texto
     }
 
     glPopAttrib();
@@ -205,39 +233,48 @@ void drawCube() {
     glPopMatrix();
 }
 
+void moveProjectiles()
+{
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile &projectile)
+                                     { return !projectile.active; }),
+                      projectiles.end());
 
-void moveProjectiles() {
-    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile& projectile) {
-        return !projectile.active;
-    }), projectiles.end());
-
-    for (auto& projectile : projectiles) {
-        if (projectile.active) {
+    for (auto &projectile : projectiles)
+    {
+        if (projectile.active)
+        {
             // Atualiza a posi��o do proj�til na dire��o calculada
             projectile.posX += projectile.speed * projectile.dirX;
             projectile.posY += projectile.speed * projectile.dirY;
 
-             // Verifica se o proj�til est� dentro da tela
-            if (projectile.posX < -10.0f || projectile.posX > 10.0f || projectile.posY < -10.0f || projectile.posY > 10.0f) {
+            // Verifica se o proj�til est� dentro da tela
+            if (projectile.posX < -10.0f || projectile.posX > 10.0f || projectile.posY < -10.0f || projectile.posY > 10.0f)
+            {
                 // Excluir do vector
                 projectile.active = false;
             }
         }
     }
-
 }
 
-void drawProjectiles() {
-    for (const auto& projectile : projectiles) {
-        if (projectile.active) {
+void drawProjectiles()
+{
+    for (const auto &projectile : projectiles)
+    {
+        if (projectile.active)
+        {
+            glPushMatrix();
             glColor3f(1.0f, 1.0f, 0.0f); // Cor do proj�til (amarelo)
             glRectf(projectile.posX - 0.05f, projectile.posY - 0.05f, projectile.posX + 0.05f, projectile.posY + 0.05f);
+            glPopMatrix();
         }
     }
 }
 
-void moveCubes() {
-    for (auto& cube : cubes) {
+void moveCubes()
+{
+    for (auto &cube : cubes)
+    {
         cube.posX += cube.speed * cube.dirX;
         cube.posY += cube.speed * cube.dirY;
         GLfloat diffX = posX - cube.posX;
@@ -248,8 +285,10 @@ void moveCubes() {
     }
 }
 
-void drawCubes() {
-    for (const auto& cube : cubes) {
+void drawCubes()
+{
+    for (const auto &cube : cubes)
+    {
         glPushMatrix();
         glTranslatef(cube.posX, cube.posY, 0.0f);
         glColor3f(1.0f, 0.0f, 0.0f);
@@ -258,15 +297,20 @@ void drawCubes() {
     }
 }
 
-void checkCollisions() {
-    for (auto& projectile : projectiles) {
-        if (projectile.active) {
-            for (auto& cube : cubes) {
+void checkCollisions()
+{
+    for (auto &projectile : projectiles)
+    {
+        if (projectile.active)
+        {
+            for (auto &cube : cubes)
+            {
                 GLfloat diffX = projectile.posX - cube.posX;
                 GLfloat diffY = projectile.posY - cube.posY;
                 GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
 
-                if (distance < 0.2f) { // Se a dist�ncia for menor que 0.2 (considerando o tamanho do cubo)
+                if (distance < 0.2f)
+                {                              // Se a dist�ncia for menor que 0.2 (considerando o tamanho do cubo)
                     projectile.active = false; // Desativa o proj�til
                     cube.posX = randomFloat(); // Reposiciona o cubo aleatoriamente
                     cube.posY = randomFloat();
@@ -277,10 +321,12 @@ void checkCollisions() {
     }
 }
 
-void initializeCubes() {
+void initializeCubes()
+{
     srand(static_cast<unsigned int>(time(nullptr)));
     int numCubes = 500 + score; // Número inicial de cubos + pontuação
-    for (int i = 0; i < numCubes; ++i) {
+    for (int i = 0; i < numCubes; ++i)
+    {
         Cube cube;
         cube.posX = randomFloat();
         cube.posY = randomFloat();
@@ -291,14 +337,15 @@ void initializeCubes() {
     }
 }
 
-void resetGame() {
+void resetGame()
+{
     // Redefina todas as variáveis e estados do jogo para seus valores iniciais
     posX = 0.0f;
     posY = 0.0f;
     // Outras variáveis do jogador e do jogo
 
     // Reinicialize os cubos inimigos
-    //initializeCubes();
+    // initializeCubes();
 
     // Reinicialize as variáveis de pontuação, vida, etc.
     score = 0;
@@ -309,14 +356,16 @@ void resetGame() {
     // Outras ações de reinicialização, se necessário
 }
 
-
-void checkCollisionPlayerCube() {
-    for (auto& cube : cubes) {
+void checkCollisionPlayerCube()
+{
+    for (auto &cube : cubes)
+    {
         GLfloat diffX = cube.posX - posX;
         GLfloat diffY = cube.posY - posY;
         GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
 
-        if (distance < 0.2f) { // Se a distância for menor que 0.2 (considerando o tamanho do cubo)
+        if (distance < 0.2f)
+        { // Se a distância for menor que 0.2 (considerando o tamanho do cubo)
             // Colisão detectada, o player cubo perde vida
             life--; // Diminui a vida do player cubo
 
@@ -325,7 +374,8 @@ void checkCollisionPlayerCube() {
             cube.posY = randomFloat();
 
             // Verifica se o player cubo perdeu todas as vidas
-            if (life <= 0) {
+            if (life <= 0)
+            {
                 // O player cubo perdeu todas as vidas, reinicia o jogo
                 resetGame();
             }
@@ -333,38 +383,46 @@ void checkCollisionPlayerCube() {
     }
 }
 
-
-
-void drawText(const std::string& text, float x, float y) {
+void drawText(const std::string &text, float x, float y)
+{
     glRasterPos2f(x, y); // Define a posição inicial do texto
 
     // Desenha cada caractere do texto
-    for (char c : text) {
+    for (char c : text)
+    {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
     }
 }
 
-void display() {
+void display()
+{
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
     // Posiciona a c�mera - para rodar no Windows
     glRotatef(0.0f, 1.0f, 0.0f, 0.0f); // Rota��o em torno do eixo X
     glRotatef(0.0f, 0.0f, 1.0f, 0.0f); // Rota��o em torno do eixo Y
-    glTranslatef(0.0f, 0.0f, -6.0f);  // Transla��o ao longo do eixo Z negativo
+    glTranslatef(0.0f, 0.0f, -6.0f);   // Transla��o ao longo do eixo Z negativo
 
     /* gluLookAt(0.0, 0.0, 5.0,  // Posi��o da c�mera
               0.0, 0.0, 0.0,  // Ponto para onde a c�mera est� olhando
               0.0, 1.0, 0.0); // Vetor de orienta��o da c�mera (eixo Y) */
-   
 
-    //glRotatef(angle, 1.0f, 1.0f, 1.0f); // Rotaciona o cubo
+    // glRotatef(angle, 1.0f, 1.0f, 1.0f); // Rotaciona o cubo
 
     // Verifica colis�es
     checkCollisions();
     checkCollisionPlayerCube();
 
+    // Desenha um chão branco
+    glPushMatrix();
+    glTranslatef(0.0f, -1.5f, -4.0f);      // Posição do chão
+    glColor3f(0.125, 0.329, 0.102);        // Cor do chão (branco)
+    glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
+    glPopMatrix();
+
     // Desenha os cubos inimigos
+
     drawCubes();
     moveCubes();
 
@@ -382,8 +440,8 @@ void display() {
 
     // Define a posição e o conteúdo do texto da pontuação
     std::string scoreText = "POINTS: " + std::to_string(score); // Exemplo, substitua pela sua pontuação real
-    float textPosX = -4.75f; // Posição X do texto no canto superior esquerdo
-    float textPosY = 2.5f;  // Posição Y do texto no canto superior esquerdo
+    float textPosX = -4.75f;                                    // Posição X do texto no canto superior esquerdo
+    float textPosY = 2.5f;                                      // Posição Y do texto no canto superior esquerdo
 
     // Desenha o texto da pontuação
     glColor3f(1.0f, 1.0f, 1.0f); // Cor do texto (branco)
@@ -392,7 +450,8 @@ void display() {
     glutSwapBuffers();
 }
 
-void reshape(int width, int height) {
+void reshape(int width, int height)
+{
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -401,11 +460,10 @@ void reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-
-
 void MouseOptions(int button, int state, int x, int y)
 {
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+    {
         float dx = (float)x / (float)glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
         float dy = 1.0f - (float)y / (float)glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 
@@ -413,8 +471,8 @@ void MouseOptions(int button, int state, int x, int y)
         Projectile newProjectile;
         newProjectile.posX = gunPosX;
         newProjectile.posY = gunPosY;
-        newProjectile.dirX = dx - (posX/6.25);
-        newProjectile.dirY = dy - (posY/3.10);
+        newProjectile.dirX = dx - (posX / 6.25);
+        newProjectile.dirY = dy - (posY / 3.10);
         newProjectile.active = true;
         newProjectile.speed = 0.03f;
 
@@ -426,28 +484,29 @@ void MouseOptions(int button, int state, int x, int y)
         // Adiciona o proj�til � lista de proj�teis
         projectiles.push_back(newProjectile);
 
-        /*std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;
-        std::cout << "Projectile created: posX = " << newProjectile.posX << ", posY = " << newProjectile.posY << std::endl;
+        if (score > 100)
+        {
+            newProjectile.posX = gunPosX;
+            newProjectile.posY = gunPosY;
+            newProjectile.dirX = (posX / 6.25) - dx;
+            newProjectile.dirY = (posY / 3.10) - dy;
+            newProjectile.active = true;
+            newProjectile.speed = 0.03f;
 
-        //Imprime todos os proj�teis na lista e todas as suas informa��es
-        int i = 0;
-        for (const auto& projectile : projectiles) {
-            std::cout << "Projectile " << i++ << std::endl << "posX = " << projectile.posX << std::endl << "posY = " << projectile.posY << std::endl << "dirX = " << projectile.dirX << std::endl << "dirY = " << projectile.dirY << std::endl << "speed = " << projectile.speed << std::endl << "active = " << projectile.active << std::endl << std::endl;
-        }*/
-        // Mouse position
-        std::cout << "Mouse position: x = " << dx << ", y = " << dy << std::endl;
-        // Cubo position
-        std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;
+            // Normaliza o vetor dire��o
+            magnitude = sqrt(newProjectile.dirX * newProjectile.dirX + newProjectile.dirY * newProjectile.dirY);
+            newProjectile.dirX /= magnitude;
+            newProjectile.dirY /= magnitude;
+
+            // Adiciona o proj�til � lista de proj�teis
+            projectiles.push_back(newProjectile);
+        }
     }
-
     glutPostRedisplay();
 }
 
-
-
-
-
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(1280, 720);
