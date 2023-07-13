@@ -5,6 +5,10 @@
 #include <math.h>
 #include <vector>
 #include <algorithm>
+#include <cmath>
+
+int score = 0;
+int life = 3;
 
 struct Projectile {
     GLfloat posX;
@@ -23,26 +27,18 @@ struct Cube {
     GLfloat speed;
 };
 
-void passiveMotion(int x, int y) {
-    // Normaliza as coordenadas do mouse para o intervalo entre -1 e 1
-    float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
-    float normalizedY = 1.0f - (float)y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
-
-    //std::cout << "PosiÁ„o do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
-}
-
 std::vector<Projectile> projectiles;
 std::vector<Cube> cubes;
 
-// Vari·vel para controlar o tempo de atualizaÁ„o
+// VariÔøΩvel para controlar o tempo de atualizaÔøΩÔøΩo
 int previousTime = 0;
 
-// FunÁ„o de temporizaÁ„o para limitar o FPS
+// FunÔøΩÔøΩo de temporizaÔøΩÔøΩo para limitar o FPS
 void timer(int value) {
-    // ObtÈm o tempo atual em milissegundos
+    // ObtÔøΩm o tempo atual em milissegundos
     int currentTime = glutGet(GLUT_ELAPSED_TIME);
 
-    // Calcula o tempo decorrido desde a ˙ltima atualizaÁ„o
+    // Calcula o tempo decorrido desde a ÔøΩltima atualizaÔøΩÔøΩo
     float deltaTime = (currentTime - previousTime) / 1000.0f; // Converter para segundos
 
     // Se passou menos de 1/60 segundos (16.67 ms), aguarda o tempo restante
@@ -59,24 +55,51 @@ void timer(int value) {
     // Redesenha a tela
     glutPostRedisplay();
 
-    // Agende a prÛxima chamada da funÁ„o de temporizaÁ„o
+    // Agende a prÔøΩxima chamada da funÔøΩÔøΩo de temporizaÔøΩÔøΩo
     glutTimerFunc(0, timer, 0);
 }
 
-// ¬ngulo de rotaÁ„o do cubo
+// ÔøΩngulo de rotaÔøΩÔøΩo do cubo
 GLfloat angle = 0.0f;
-// PosiÁ„o do cubo
+// PosiÔøΩÔøΩo do cubo
 GLfloat posX = 0.0f, posY = 0.0f;
 
 // Cores para cada face do cubole
-int color = 0;
 GLfloat colors[][3] = {
-    {0.0, 1.0, 0.0},  // Verde
-    {0.0, 0.0, 1.0},  // Azul
-    {1.0, 1.0, 0.0},  // Amarelo
-    {1.0, 0.0, 1.0},  // Magenta
-    {0.0, 1.0, 1.0}   // Ciano
+    {1.0f, 0.0f, 0.0f},   // Vermelho
+    {1.0f, 0.5f, 0.0f},   // Laranja
+    {1.0f, 1.0f, 0.0f},   // Amarelo
+    {0.0f, 1.0f, 0.0f},   // Verde
+    {0.0f, 0.0f, 1.0f},   // Azul
+    {0.5f, 0.0f, 0.5f}    // Roxo
 };
+
+int colorIndex = 0;  // √çndice da cor atual
+float colorChangeSpeed = 0.07f;  // Velocidade de mudan√ßa de cor
+float rainbowEffectTime = 0.0f; // Tempo para controlar a transi√ß√£o de cores
+
+void rainbowEffect() {
+    // Atualiza o tempo para controlar a transi√ß√£o de cores
+    rainbowEffectTime += colorChangeSpeed;
+
+    // Calcula as componentes de cor R, G e B com base no tempo e nas fun√ß√µes trigonom√©tricas
+    GLfloat red = 0.5f + 0.5f * sin(rainbowEffectTime);
+    GLfloat green = 0.5f + 0.5f * sin(rainbowEffectTime + 2.0f * M_PI / 3.0f);
+    GLfloat blue = 0.5f + 0.5f * sin(rainbowEffectTime + 4.0f * M_PI / 3.0f);
+
+    // Define as novas cores para o cubo
+    for (int i = 0; i < 6; ++i) {
+        colors[i][0] = red;
+        colors[i][1] = green;
+        colors[i][2] = blue;
+    }
+
+    // Chama glutPostRedisplay() para redesenhar o cubo com as novas cores
+    glutPostRedisplay();
+}
+
+
+
 
 bool moveUp = false, moveDown = false, moveLeft = false, moveRight = false;
 
@@ -84,7 +107,7 @@ float randomFloat() {
    return -100.0f + (200.0f * rand()) / (RAND_MAX + 100.0f);
 }
 
-// Trecho destino a permiter o use v·rias teclas ao mesmo tempo
+// Trecho destino a permiter o use vÔøΩrias teclas ao mesmo tempo
 bool buffer[256];
 
 void keyboard(unsigned char key, int x, int y) {
@@ -97,37 +120,91 @@ void keyboardUp(unsigned char key, int x, int y) {
 
 void moveCube() {
     if (buffer['w']) { // Move para cima
-        posY += 0.05f;
+        posY += 0.02f;
     }
     if (buffer['s']) { // Move para baixo
-        posY -= 0.05f;
+        posY -= 0.02f;
     }
     if (buffer['a']) { // Move para a esquerda
-        posX -= 0.05f;
+        posX -= 0.02f;
     }
     if (buffer['d']) { // Move para a direita
-        posX += 0.05f;
+        posX += 0.02f;
     }
 }
+
+GLfloat mouseX, mouseY;
+int windowWidth = 1280;
+int windowHeight = 720;
+
+void passiveMotion(int x, int y) {
+    // Atualiza as coordenadas do mouse
+    mouseX = x;
+    mouseY = y;
+    std::cout << "PosiÔøΩÔøΩo do mouse: x = " << x << ", y = " << y << std::endl;
+    
+    // Normaliza as coordenadas do mouse para o intervalo entre -1 e 1
+    float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
+    float normalizedY = 1.0f - (float)y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
+
+    //std::cout << "PosiÔøΩÔøΩo do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
+}
+
+float gunPosX, gunPosY;
+void drawGun() {
+    // Define as coordenadas da pistola em rela√ß√£o ao centro do cubo
+    float gunOffsetX = 0.15f;
+    float gunOffsetY = 0.0f;
+
+    // Obt√©m as coordenadas do mouse normalizadas
+    float mousePosX = static_cast<float>(mouseX) / static_cast<float>(windowWidth) * 2.0f - 1.0f;
+    float mousePosY = 1.0f - static_cast<float>(mouseY) / static_cast<float>(windowHeight) * 2.0f;
+
+    // Calcula o √¢ngulo entre a pistola e a posi√ß√£o do mouse
+    GLfloat normPosX =(posX/6.25);
+    GLfloat normPosY =(posY/3.10);
+
+
+    float angle = atan2(mousePosY - normPosY, mousePosX - normPosX);
+
+    // Calcula as coordenadas da pistola girada em rela√ß√£o ao centro do cubo
+    gunPosX = posX + gunOffsetX * cos(angle) - gunOffsetY * sin(angle);
+    gunPosY = posY + gunOffsetX * sin(angle) + gunOffsetY * cos(angle);
+
+    // Desenha a pistola
+    glPushMatrix();
+    glTranslatef(gunPosX, gunPosY, 0.0f);
+    glRotatef(angle * 180.0f / M_PI, 0.0f, 0.0f, 1.0f);
+    glColor3f(1.0f, 1.0f, 1.0f); // Cor da pistola (branco)
+    glRectf(-0.05f, -0.02f, 0.15f, 0.02f);
+    glPopMatrix();
+}
+
 
 void drawCube() {
-    glBegin(GL_QUADS);
-        glColor3fv(colors[color]);
-        glVertex2f(posX, posY);
-        glVertex2f(posX + 0.2f, posY);
-        glVertex2f(posX + 0.2f, posY + 0.2f);
-        glVertex2f(posX, posY + 0.2f);
-    glEnd();
+    glPushMatrix();
+    glTranslatef(posX, posY, 0.0f);
+    glColor3fv(colors[colorIndex]);
+    glutSolidCube(0.2f);
+
+    // Desenha o texto de vida acima do cubo
+    glPushMatrix();
+    glTranslatef(-0.17f, 0.25f, 0.0f);  // Posi√ß√£o do texto acima do cubo
+    glPushAttrib(GL_CURRENT_BIT);
+    glColor3f(0.0f, 1.0f, 0.0f);  // Cor do texto (branco)
+
+    std::string lifeText = "Life: " + std::to_string(life) ;  // Exemplo de texto de vida (substitua pelo valor real)
+    glRasterPos3f(0.0f, 0.0f, 0.0f);
+    for (char c : lifeText) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);  // Fonte do texto
+    }
+
+    glPopAttrib();
+    glPopMatrix();
+
+    glPopMatrix();
 }
 
-void nextColor(){
-    if(randomFloat() > 98.5){
-        color++;
-        if(color >= 6)
-            color = 0;
-    }
-    glutPostRedisplay();
-}
 
 void moveProjectiles() {
     projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile& projectile) {
@@ -136,11 +213,11 @@ void moveProjectiles() {
 
     for (auto& projectile : projectiles) {
         if (projectile.active) {
-            // Atualiza a posiÁ„o do projÈtil na direÁ„o calculada
+            // Atualiza a posiÔøΩÔøΩo do projÔøΩtil na direÔøΩÔøΩo calculada
             projectile.posX += projectile.speed * projectile.dirX;
             projectile.posY += projectile.speed * projectile.dirY;
 
-             // Verifica se o projÈtil est· dentro da tela
+             // Verifica se o projÔøΩtil estÔøΩ dentro da tela
             if (projectile.posX < -10.0f || projectile.posX > 10.0f || projectile.posY < -10.0f || projectile.posY > 10.0f) {
                 // Excluir do vector
                 projectile.active = false;
@@ -153,7 +230,7 @@ void moveProjectiles() {
 void drawProjectiles() {
     for (const auto& projectile : projectiles) {
         if (projectile.active) {
-            glColor3f(1.0f, 1.0f, 0.0f); // Cor do projÈtil (amarelo)
+            glColor3f(1.0f, 1.0f, 0.0f); // Cor do projÔøΩtil (amarelo)
             glRectf(projectile.posX - 0.05f, projectile.posY - 0.05f, projectile.posX + 0.05f, projectile.posY + 0.05f);
         }
     }
@@ -189,13 +266,81 @@ void checkCollisions() {
                 GLfloat diffY = projectile.posY - cube.posY;
                 GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
 
-                if (distance < 0.2f) { // Se a dist‚ncia for menor que 0.2 (considerando o tamanho do cubo)
-                    projectile.active = false; // Desativa o projÈtil
+                if (distance < 0.2f) { // Se a distÔøΩncia for menor que 0.2 (considerando o tamanho do cubo)
+                    projectile.active = false; // Desativa o projÔøΩtil
                     cube.posX = randomFloat(); // Reposiciona o cubo aleatoriamente
                     cube.posY = randomFloat();
+                    score++; // Incrementa a pontuaÔøΩÔøΩo
                 }
             }
         }
+    }
+}
+
+void initializeCubes() {
+    srand(static_cast<unsigned int>(time(nullptr)));
+    int numCubes = 500 + score; // N√∫mero inicial de cubos + pontua√ß√£o
+    for (int i = 0; i < numCubes; ++i) {
+        Cube cube;
+        cube.posX = randomFloat();
+        cube.posY = randomFloat();
+        cube.dirX = 0.0f;
+        cube.dirY = 0.0f;
+        cube.speed = 0.015f;
+        cubes.push_back(cube);
+    }
+}
+
+void resetGame() {
+    // Redefina todas as vari√°veis e estados do jogo para seus valores iniciais
+    posX = 0.0f;
+    posY = 0.0f;
+    // Outras vari√°veis do jogador e do jogo
+
+    // Reinicialize os cubos inimigos
+    //initializeCubes();
+
+    // Reinicialize as vari√°veis de pontua√ß√£o, vida, etc.
+    score = 0;
+    life = 3;
+
+    cubes.clear();
+    initializeCubes();
+    // Outras a√ß√µes de reinicializa√ß√£o, se necess√°rio
+}
+
+
+void checkCollisionPlayerCube() {
+    for (auto& cube : cubes) {
+        GLfloat diffX = cube.posX - posX;
+        GLfloat diffY = cube.posY - posY;
+        GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
+
+        if (distance < 0.2f) { // Se a dist√¢ncia for menor que 0.2 (considerando o tamanho do cubo)
+            // Colis√£o detectada, o player cubo perde vida
+            life--; // Diminui a vida do player cubo
+
+            // Reposiciona o cubo inimigo aleatoriamente
+            cube.posX = randomFloat();
+            cube.posY = randomFloat();
+
+            // Verifica se o player cubo perdeu todas as vidas
+            if (life <= 0) {
+                // O player cubo perdeu todas as vidas, reinicia o jogo
+                resetGame();
+            }
+        }
+    }
+}
+
+
+
+void drawText(const std::string& text, float x, float y) {
+    glRasterPos2f(x, y); // Define a posi√ß√£o inicial do texto
+
+    // Desenha cada caractere do texto
+    for (char c : text) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
     }
 }
 
@@ -203,20 +348,21 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    // Posiciona a c‚mera - para rodar no Windows
-    glRotatef(0.0f, 1.0f, 0.0f, 0.0f); // RotaÁ„o em torno do eixo X
-    glRotatef(0.0f, 0.0f, 1.0f, 0.0f); // RotaÁ„o em torno do eixo Y
-    glTranslatef(0.0f, 0.0f, -5.0f);  // TranslaÁ„o ao longo do eixo Z negativo
+    // Posiciona a cÔøΩmera - para rodar no Windows
+    glRotatef(0.0f, 1.0f, 0.0f, 0.0f); // RotaÔøΩÔøΩo em torno do eixo X
+    glRotatef(0.0f, 0.0f, 1.0f, 0.0f); // RotaÔøΩÔøΩo em torno do eixo Y
+    glTranslatef(0.0f, 0.0f, -6.0f);  // TranslaÔøΩÔøΩo ao longo do eixo Z negativo
 
-    /*gluLookAt(0.0, 0.0, 5.0,  // PosiÁ„o da c‚mera
-              0.0, 0.0, 0.0,  // Ponto para onde a c‚mera est· olhando
-              0.0, 1.0, 0.0); // Vetor de orientaÁ„o da c‚mera (eixo Y)
-    */
+    /* gluLookAt(0.0, 0.0, 5.0,  // PosiÔøΩÔøΩo da cÔøΩmera
+              0.0, 0.0, 0.0,  // Ponto para onde a cÔøΩmera estÔøΩ olhando
+              0.0, 1.0, 0.0); // Vetor de orientaÔøΩÔøΩo da cÔøΩmera (eixo Y) */
+   
 
     //glRotatef(angle, 1.0f, 1.0f, 1.0f); // Rotaciona o cubo
 
-    // Verifica colisıes
+    // Verifica colisÔøΩes
     checkCollisions();
+    checkCollisionPlayerCube();
 
     // Desenha os cubos inimigos
     drawCubes();
@@ -226,11 +372,23 @@ void display() {
     drawCube();
     moveCube();
 
+    drawGun();
+
     // Desenha o tiro
     drawProjectiles();
     moveProjectiles();
 
     glFlush();
+
+    // Define a posi√ß√£o e o conte√∫do do texto da pontua√ß√£o
+    std::string scoreText = "POINTS: " + std::to_string(score); // Exemplo, substitua pela sua pontua√ß√£o real
+    float textPosX = -4.75f; // Posi√ß√£o X do texto no canto superior esquerdo
+    float textPosY = 2.5f;  // Posi√ß√£o Y do texto no canto superior esquerdo
+
+    // Desenha o texto da pontua√ß√£o
+    glColor3f(1.0f, 1.0f, 1.0f); // Cor do texto (branco)
+    drawText(scoreText, textPosX, textPosY);
+
     glutSwapBuffers();
 }
 
@@ -243,18 +401,7 @@ void reshape(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void initializeCubes() {
-    srand(static_cast<unsigned int>(time(nullptr)));
-    for (int i = 0; i < 1000; ++i) {
-        Cube cube;
-        cube.posX = randomFloat();
-        cube.posY = randomFloat();
-        cube.dirX = 0.0f;
-        cube.dirY = 0.0f;
-        cube.speed = 0.02f;
-        cubes.push_back(cube);
-    }
-}
+
 
 void MouseOptions(int button, int state, int x, int y)
 {
@@ -262,55 +409,58 @@ void MouseOptions(int button, int state, int x, int y)
         float dx = (float)x / (float)glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
         float dy = 1.0f - (float)y / (float)glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 
-        // Cria um novo projÈtil e define a posiÁ„o e direÁ„o inicial
+        // Cria um novo projÔøΩtil e define a posiÔøΩÔøΩo e direÔøΩÔøΩo inicial
         Projectile newProjectile;
-        newProjectile.posX = posX;
-        newProjectile.posY = posY;
-        newProjectile.dirX = dx - (posX/2);
-        newProjectile.dirY = dy - (posY/2);
+        newProjectile.posX = gunPosX;
+        newProjectile.posY = gunPosY;
+        newProjectile.dirX = dx - (posX/6.25);
+        newProjectile.dirY = dy - (posY/3.10);
         newProjectile.active = true;
-        newProjectile.speed = 0.02f;
+        newProjectile.speed = 0.03f;
 
-        // Normaliza o vetor direÁ„o
+        // Normaliza o vetor direÔøΩÔøΩo
         GLfloat magnitude = sqrt(newProjectile.dirX * newProjectile.dirX + newProjectile.dirY * newProjectile.dirY);
         newProjectile.dirX /= magnitude;
         newProjectile.dirY /= magnitude;
 
-        // Adiciona o projÈtil ‡ lista de projÈteis
+        // Adiciona o projÔøΩtil ÔøΩ lista de projÔøΩteis
         projectiles.push_back(newProjectile);
 
         /*std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;
         std::cout << "Projectile created: posX = " << newProjectile.posX << ", posY = " << newProjectile.posY << std::endl;
 
-        //Imprime todos os projÈteis na lista e todas as suas informaÁıes
+        //Imprime todos os projÔøΩteis na lista e todas as suas informaÔøΩÔøΩes
         int i = 0;
         for (const auto& projectile : projectiles) {
             std::cout << "Projectile " << i++ << std::endl << "posX = " << projectile.posX << std::endl << "posY = " << projectile.posY << std::endl << "dirX = " << projectile.dirX << std::endl << "dirY = " << projectile.dirY << std::endl << "speed = " << projectile.speed << std::endl << "active = " << projectile.active << std::endl << std::endl;
-        }
+        }*/
         // Mouse position
         std::cout << "Mouse position: x = " << dx << ", y = " << dy << std::endl;
         // Cubo position
-        std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;*/
+        std::cout << "Cube position: x = " << posX << ", y = " << posY << std::endl;
     }
 
     glutPostRedisplay();
 }
 
 
+
+
+
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(500, 500);
-    glutCreateWindow("Cubo M·gico");
+    glutInitWindowSize(1280, 720);
+    glutCreateWindow("Cubo MÔøΩgico");
     srand(time(NULL));
     // Cor do cubo
-    glutIdleFunc(nextColor);
+    glutIdleFunc(rainbowEffect);
     // Movimento e tiro
-    // Registra as funÁıes de callback para as teclas pressionadas e liberadas
+    // Registra as funÔøΩÔøΩes de callback para as teclas pressionadas e liberadas
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
     glutMouseFunc(MouseOptions);
-    // Chame a funÁ„o de temporizaÁ„o para iniciar o controle de FPS
+    // Chame a funÔøΩÔøΩo de temporizaÔøΩÔøΩo para iniciar o controle de FPS
     glutTimerFunc(0, timer, 0);
     // Pegar as coordenadas do mouse passivamente
     glutPassiveMotionFunc(passiveMotion);
@@ -323,4 +473,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
