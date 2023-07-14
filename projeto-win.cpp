@@ -313,11 +313,14 @@ void drawCubes()
     {
         glPushMatrix();
         glTranslatef(cube.posX, cube.posY, 0.0f);
+        if (light)
+            glScalef(1.5f, 1.5f, 1.5f);
         glColor3f(1.0f, 0.0f, 0.0f);
         glutSolidCube(0.2f);
         glPopMatrix();
     }
 }
+
 
 void checkCollisions()
 {
@@ -331,6 +334,8 @@ void checkCollisions()
                 GLfloat diffY = projectile.posY - cube.posY;
                 GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
 
+                if (light)
+                    distance -= 0.1f; // Diminui a dist�ncia para considerar o tamanho do cubo
                 if (distance < 0.2f)
                 {                              // Se a dist�ncia for menor que 0.2 (considerando o tamanho do cubo)
                     projectile.active = false; // Desativa o proj�til
@@ -384,13 +389,14 @@ void resetGame()
     // Reinicialize as variáveis de pontuação, vida, etc.
     life = 3;
     cubes.clear();
-    
-    glutTimerFunc(2000, [](int) {
-        score = 0;
-        initializeCubes();
-    }, 0);
 
-    
+    glutTimerFunc(
+        2000, [](int)
+        {
+        score = 0;
+        initializeCubes(); },
+        0);
+
     // Outras ações de reinicialização, se necessário
 }
 
@@ -402,6 +408,8 @@ void checkCollisionPlayerCube()
         GLfloat diffY = cube.posY - posY;
         GLfloat distance = sqrt(diffX * diffX + diffY * diffY);
 
+        if (light)
+            distance += 0.1f; // Diminui a distância para considerar o tamanho do cubo
         if (distance < 0.2f)
         { // Se a distância for menor que 0.2 (considerando o tamanho do cubo)
             // Colisão detectada, o player cubo perde vida
