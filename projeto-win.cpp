@@ -114,10 +114,24 @@ float randomFloat()
 
 // Trecho destino a permiter o use v�rias teclas ao mesmo tempo
 bool buffer[256];
+bool light = false; // Inicialmente, a iluminação está desligada
 
 void keyboard(unsigned char key, int x, int y)
 {
     buffer[key] = true;
+    if (key == 'F' || key == 'f')
+    { // Move para a direita
+        if (!light)
+        {
+            glEnable(GL_LIGHTING);
+            light = true;
+        }
+        else
+        {
+            glDisable(GL_LIGHTING);
+            light = false;
+        }
+    }
 }
 
 void keyboardUp(unsigned char key, int x, int y)
@@ -148,13 +162,11 @@ void moveCube()
 GLfloat mouseX, mouseY;
 int windowWidth = 1280;
 int windowHeight = 720;
-
 void passiveMotion(int x, int y)
 {
     // Atualiza as coordenadas do mouse
     mouseX = x;
     mouseY = y;
-    std::cout << "Posi��o do mouse: x = " << x << ", y = " << y << std::endl;
 
     // Normaliza as coordenadas do mouse para o intervalo entre -1 e 1
     float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
@@ -214,6 +226,8 @@ void drawCube()
     glColor3fv(colors[colorIndex]);
     glutSolidCube(0.2f);
 
+    if (light)
+        glDisable(GL_LIGHTING);
     // Desenha o texto de vida acima do cubo
     glPushMatrix();
     glTranslatef(-0.17f, 0.25f, 0.0f); // Posição do texto acima do cubo
@@ -227,6 +241,8 @@ void drawCube()
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c); // Fonte do texto
     }
 
+    if (light)
+        glDisable(GL_LIGHTING);
     glPopAttrib();
     glPopMatrix();
 
@@ -282,6 +298,11 @@ void moveCubes()
         GLfloat magnitude = sqrt(diffX * diffX + diffY * diffY);
         cube.dirX = diffX / magnitude;
         cube.dirY = diffY / magnitude;
+
+        if (light)
+            cube.speed = 0.03f;
+        else
+            cube.speed = 0.015f;
     }
 }
 
@@ -314,7 +335,10 @@ void checkCollisions()
                     projectile.active = false; // Desativa o proj�til
                     cube.posX = randomFloat(); // Reposiciona o cubo aleatoriamente
                     cube.posY = randomFloat();
-                    score++; // Incrementa a pontua��o
+                    if (light)
+                        score += 2; // Incrementa a pontua��o
+                    else
+                        score++; // Incrementa a pontua��o
                 }
             }
         }
@@ -414,13 +438,6 @@ void display()
     checkCollisions();
     checkCollisionPlayerCube();
 
-    // Desenha um chão branco
-    glPushMatrix();
-    glTranslatef(0.0f, -1.5f, -4.0f);      // Posição do chão
-    glColor3f(0.125, 0.329, 0.102);        // Cor do chão (branco)
-    glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
-    glPopMatrix();
-
     // Desenha os cubos inimigos
 
     drawCubes();
@@ -430,13 +447,27 @@ void display()
     drawCube();
     moveCube();
 
+
+    glFlush();
+
+    if (light)
+        glDisable(GL_LIGHTING); // Desativa a iluminação temporariamente para renderizar os textos
+
+    // Desenha um chão branco
+    glPushMatrix();
+    glTranslatef(0.0f, -1.5f, -4.0f);      // Posição do chão
+    if (!light)
+        glColor3f(0.125, 0.329, 0.102);
+    else
+        glColor3f(0.1f, 0.1f, 0.1f);
+    glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
+    glPopMatrix();
+
     drawGun();
 
     // Desenha o tiro
     drawProjectiles();
     moveProjectiles();
-
-    glFlush();
 
     // Define a posição e o conteúdo do texto da pontuação
     std::string scoreText = "POINTS: " + std::to_string(score); // Exemplo, substitua pela sua pontuação real
@@ -446,7 +477,8 @@ void display()
     // Desenha o texto da pontuação
     glColor3f(1.0f, 1.0f, 1.0f); // Cor do texto (branco)
     drawText(scoreText, textPosX, textPosY);
-
+    if (light)
+        glEnable(GL_LIGHTING); // Reativa a iluminação
     glutSwapBuffers();
 }
 
@@ -505,15 +537,45 @@ void MouseOptions(int button, int state, int x, int y)
     glutPostRedisplay();
 }
 
+void init()
+{
+    // glEnable(GL_LIGHTING);          // Habilita a iluminação
+    glEnable(GL_LIGHT0); // Habilita a fonte de luz 0       // Habilita o teste de profundidade
+
+    // Define a posição da fonte de luz
+    GLfloat lightPosition[] = {1.0f, 1.0f, 1.0f, 0.0f}; // Fonte de luz direcional
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+
+    // Define as propriedades da luz
+    GLfloat lightAmbient[] = {0.2f, 0.2f, 0.2f, 1.0f};  // Cor ambiente da luz
+    GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};  // Cor difusa da luz
+    GLfloat lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f}; // Cor especular da luz
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+
+    // Define as propriedades do material
+    GLfloat materialAmbient[] = {0.2f, 0.2f, 0.2f, 1.0f};  // Cor ambiente do material
+    GLfloat materialDiffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};  // Cor difusa do material
+    GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f}; // Cor especular do material
+    GLfloat materialShininess = 32.0f;                     // Brilho do material
+    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
+    glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
+}
+
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(1280, 720);
     glutCreateWindow("Cubo M�gico");
+    init();
     srand(time(NULL));
     // Cor do cubo
     glutIdleFunc(rainbowEffect);
+    init();
     // Movimento e tiro
     // Registra as fun��es de callback para as teclas pressionadas e liberadas
     glutKeyboardFunc(keyboard);
@@ -528,6 +590,7 @@ int main(int argc, char **argv)
     glutReshapeFunc(reshape);
     initializeCubes();
     glEnable(GL_DEPTH_TEST);
+
     glutMainLoop();
 
     return 0;
