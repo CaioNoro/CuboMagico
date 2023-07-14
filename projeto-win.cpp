@@ -8,6 +8,7 @@
 #include <cmath>
 
 int score = 0;
+int score_end = 0;
 int life = 3;
 
 struct Projectile
@@ -360,7 +361,16 @@ void initializeCubes()
         cubes.push_back(cube);
     }
 }
+void drawText(const std::string &text, float x, float y)
+{
+    glRasterPos2f(x, y); // Define a posição inicial do texto
 
+    // Desenha cada caractere do texto
+    for (char c : text)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
+    }
+}
 void resetGame()
 {
     // Redefina todas as variáveis e estados do jogo para seus valores iniciais
@@ -370,13 +380,17 @@ void resetGame()
 
     // Reinicialize os cubos inimigos
     // initializeCubes();
-
+    score_end = score;
     // Reinicialize as variáveis de pontuação, vida, etc.
-    score = 0;
     life = 3;
-
     cubes.clear();
-    initializeCubes();
+    
+    glutTimerFunc(2000, [](int) {
+        score = 0;
+        initializeCubes();
+    }, 0);
+
+    
     // Outras ações de reinicialização, se necessário
 }
 
@@ -404,17 +418,6 @@ void checkCollisionPlayerCube()
                 resetGame();
             }
         }
-    }
-}
-
-void drawText(const std::string &text, float x, float y)
-{
-    glRasterPos2f(x, y); // Define a posição inicial do texto
-
-    // Desenha cada caractere do texto
-    for (char c : text)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
     }
 }
 
@@ -447,7 +450,6 @@ void display()
     drawCube();
     moveCube();
 
-
     glFlush();
 
     if (light)
@@ -455,7 +457,7 @@ void display()
 
     // Desenha um chão branco
     glPushMatrix();
-    glTranslatef(0.0f, -1.5f, -4.0f);      // Posição do chão
+    glTranslatef(0.0f, -1.5f, -4.0f); // Posição do chão
     if (!light)
         glColor3f(0.125, 0.329, 0.102);
     else
