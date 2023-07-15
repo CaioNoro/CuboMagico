@@ -11,6 +11,57 @@ int score = 0;
 int score_end = 0;
 int life = 3;
 
+#define checkImageWidth 192
+#define checkImageHeight 108
+static GLubyte checkImage[checkImageHeight][checkImageWidth][4];
+
+#ifdef GL_VERSION_1_1
+static GLuint texName;
+#endif
+
+GLuint LoadTexture(const char *filename)
+{
+    GLuint texture;
+    int width, height;
+    unsigned char *data;
+
+    FILE *file;
+    file = fopen(filename, "rb");
+
+    if (file == NULL)
+        return 0;
+    width = 192;
+    height = 108;
+    data = (unsigned char *)malloc(width * height * 3);
+    // int size = fseek(file,);
+    fread(data, width * height * 3, 1, file);
+    fclose(file);
+
+    for (int i = 0; i < width * height; ++i)
+    {
+        int index = i * 3;
+        unsigned char B, R;
+        B = data[index];
+        R = data[index + 2];
+
+        data[index] = R;
+        data[index + 2] = B;
+    }
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    free(data);
+
+    return texture;
+}
+
 struct Projectile
 {
     GLfloat posX;
@@ -321,7 +372,6 @@ void drawCubes()
     }
 }
 
-
 void checkCollisions()
 {
     for (auto &projectile : projectiles)
@@ -465,12 +515,33 @@ void display()
 
     // Desenha um chão branco
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    GLuint texture;
+    texture = LoadTexture("grass.bmp");
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+
     glTranslatef(0.0f, -1.5f, -4.0f); // Posição do chão
     if (!light)
-        glColor3f(0.125, 0.329, 0.102);
-    else
-        glColor3f(0.1f, 0.1f, 0.1f);
-    glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
+        glColor3f(0.8f, 1.0f, 0.8f);
+    /*else
+        glColor3f(1.0f, 1.0f, 1.0f);     */
+
+    // glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
+    //  Define as coordenadas de textura para cada vértice do retângulo
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-30.0f, 20.0f, -10.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-30.0f, -10.0f, -10.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(30.0f, -10.0f, -10.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(30.0f, 20.0f, -10.0f);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 
     drawGun();
@@ -573,6 +644,22 @@ void init()
     glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDiffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
+
+    glShadeModel(GL_FLAT);
+    glEnable(GL_DEPTH_TEST);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glGenTextures(1, &texName);
+    glBindTexture(GL_TEXTURE_2D, texName);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, checkImageHeight,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage);
 }
 
 int main(int argc, char **argv)
