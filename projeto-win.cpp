@@ -7,18 +7,43 @@
 #include <algorithm>
 #include <cmath>
 
+// Variáveis globais de controle dos pontos e do número de vidas
 int score = 0;
 int score_end = 0;
 int life = 3;
 
+// Variáveis globais para a textura
 #define checkImageWidth 192
 #define checkImageHeight 108
 static GLubyte checkImage[checkImageHeight][checkImageWidth][4];
-
-#ifdef GL_VERSION_1_1
 static GLuint texName;
-#endif
 
+// Struct para representar um projétil
+struct Projectile
+{
+    GLfloat posX;
+    GLfloat posY;
+    GLfloat dirX;
+    GLfloat dirY;
+    bool active;
+    GLfloat speed;
+};
+
+// Struct para representar um cubo inimigo
+struct Cube
+{
+    GLfloat posX;
+    GLfloat posY;
+    GLfloat dirX;
+    GLfloat dirY;
+    GLfloat speed;
+};
+
+// Vetor de projéteis e cubos inimigos
+std::vector<Projectile> projectiles;
+std::vector<Cube> cubes;
+
+// Função que carrega uma imagem e cria uma textura OpenGL
 GLuint LoadTexture(const char *filename)
 {
     GLuint texture;
@@ -62,28 +87,6 @@ GLuint LoadTexture(const char *filename)
     return texture;
 }
 
-struct Projectile
-{
-    GLfloat posX;
-    GLfloat posY;
-    GLfloat dirX;
-    GLfloat dirY;
-    bool active;
-    GLfloat speed;
-};
-
-struct Cube
-{
-    GLfloat posX;
-    GLfloat posY;
-    GLfloat dirX;
-    GLfloat dirY;
-    GLfloat speed;
-};
-
-std::vector<Projectile> projectiles;
-std::vector<Cube> cubes;
-
 // Vari�vel para controlar o tempo de atualiza��o
 int previousTime = 0;
 
@@ -116,11 +119,9 @@ void timer(int value)
     glutTimerFunc(0, timer, 0);
 }
 
-// �ngulo de rota��o do cubo
-GLfloat angle = 0.0f;
-// Posi��o do cubo
-GLfloat posX = 0.0f, posY = 0.0f;
 
+// Posição do cubo
+GLfloat posX = 0.0f, posY = 0.0f;
 // Cores para cada face do cubole
 GLfloat colors[][3] = {
     {1.0f, 0.0f, 0.0f}, // Vermelho
@@ -156,8 +157,6 @@ void rainbowEffect()
     // Chama glutPostRedisplay() para redesenhar o cubo com as novas cores
     glutPostRedisplay();
 }
-
-bool moveUp = false, moveDown = false, moveLeft = false, moveRight = false;
 
 float randomFloat()
 {
@@ -219,12 +218,6 @@ void passiveMotion(int x, int y)
     // Atualiza as coordenadas do mouse
     mouseX = x;
     mouseY = y;
-
-    // Normaliza as coordenadas do mouse para o intervalo entre -1 e 1
-    float normalizedX = (float)x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f - 1.0f;
-    float normalizedY = 1.0f - (float)y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
-
-    // std::cout << "Posi��o do mouse (normalizada): x = " << normalizedX << ", y = " << normalizedY << std::endl;
 }
 
 float gunPosX, gunPosY;
@@ -295,6 +288,7 @@ void drawCube()
 
     if (light)
         glDisable(GL_LIGHTING);
+
     glPopAttrib();
     glPopMatrix();
 
@@ -372,6 +366,54 @@ void drawCubes()
     }
 }
 
+void initializeCubes()
+{
+    srand(static_cast<unsigned int>(time(nullptr)));
+    int numCubes = 500 + score; // Número inicial de cubos + pontuação
+    for (int i = 0; i < numCubes; ++i)
+    {
+        Cube cube;
+        cube.posX = randomFloat();
+        cube.posY = randomFloat();
+        cube.dirX = 0.0f;
+        cube.dirY = 0.0f;
+        cube.speed = 0.015f;
+        cubes.push_back(cube);
+    }
+}
+void drawText(const std::string &text, float x, float y)
+{
+    glRasterPos2f(x, y); // Define a posição inicial do texto
+
+    // Desenha cada caractere do texto
+    for (char c : text)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
+    }
+}
+
+void resetGame()
+{
+    // Redefina todas as variáveis e estados do jogo para seus valores iniciais
+    posX = 0.0f;
+    posY = 0.0f;
+    // Outras variáveis do jogador e do jogo
+
+    score_end = score;
+    // Reinicialize as variáveis de pontuação, vida, etc.
+    life = 3;
+    cubes.clear();
+
+    glutTimerFunc(
+        2000, [](int)
+        {
+        score = 0;
+        initializeCubes(); },
+        0);
+
+    // Outras ações de reinicialização, se necessário
+}
+
 void checkCollisions()
 {
     for (auto &projectile : projectiles)
@@ -401,55 +443,6 @@ void checkCollisions()
     }
 }
 
-void initializeCubes()
-{
-    srand(static_cast<unsigned int>(time(nullptr)));
-    int numCubes = 500 + score; // Número inicial de cubos + pontuação
-    for (int i = 0; i < numCubes; ++i)
-    {
-        Cube cube;
-        cube.posX = randomFloat();
-        cube.posY = randomFloat();
-        cube.dirX = 0.0f;
-        cube.dirY = 0.0f;
-        cube.speed = 0.015f;
-        cubes.push_back(cube);
-    }
-}
-void drawText(const std::string &text, float x, float y)
-{
-    glRasterPos2f(x, y); // Define a posição inicial do texto
-
-    // Desenha cada caractere do texto
-    for (char c : text)
-    {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // Use uma fonte bitmap (HELVETICA_12 neste exemplo)
-    }
-}
-void resetGame()
-{
-    // Redefina todas as variáveis e estados do jogo para seus valores iniciais
-    posX = 0.0f;
-    posY = 0.0f;
-    // Outras variáveis do jogador e do jogo
-
-    // Reinicialize os cubos inimigos
-    // initializeCubes();
-    score_end = score;
-    // Reinicialize as variáveis de pontuação, vida, etc.
-    life = 3;
-    cubes.clear();
-
-    glutTimerFunc(
-        2000, [](int)
-        {
-        score = 0;
-        initializeCubes(); },
-        0);
-
-    // Outras ações de reinicialização, se necessário
-}
-
 void checkCollisionPlayerCube()
 {
     for (auto &cube : cubes)
@@ -477,100 +470,6 @@ void checkCollisionPlayerCube()
             }
         }
     }
-}
-
-void display()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-
-    // Posiciona a c�mera - para rodar no Windows
-    glRotatef(0.0f, 1.0f, 0.0f, 0.0f); // Rota��o em torno do eixo X
-    glRotatef(0.0f, 0.0f, 1.0f, 0.0f); // Rota��o em torno do eixo Y
-    glTranslatef(0.0f, 0.0f, -6.0f);   // Transla��o ao longo do eixo Z negativo
-
-    /* gluLookAt(0.0, 0.0, 5.0,  // Posi��o da c�mera
-              0.0, 0.0, 0.0,  // Ponto para onde a c�mera est� olhando
-              0.0, 1.0, 0.0); // Vetor de orienta��o da c�mera (eixo Y) */
-
-    // glRotatef(angle, 1.0f, 1.0f, 1.0f); // Rotaciona o cubo
-
-    // Verifica colis�es
-    checkCollisions();
-    checkCollisionPlayerCube();
-
-    // Desenha os cubos inimigos
-
-    drawCubes();
-    moveCubes();
-
-    // Desenha o cubo
-    drawCube();
-    moveCube();
-
-    glFlush();
-
-    if (light)
-        glDisable(GL_LIGHTING); // Desativa a iluminação temporariamente para renderizar os textos
-
-    // Desenha um chão branco
-    glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    GLuint texture;
-    texture = LoadTexture("grass.bmp");
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTranslatef(0.0f, -1.5f, -4.0f); // Posição do chão
-    if (!light)
-        glColor3f(0.8f, 1.0f, 0.8f);
-    /*else
-        glColor3f(1.0f, 1.0f, 1.0f);     */
-
-    // glRectf(-10.0f, 10.0f, 10.0f, -10.0f); // Desenha o retângulo do chão
-    //  Define as coordenadas de textura para cada vértice do retângulo
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-30.0f, 20.0f, -10.0f);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-30.0f, -10.0f, -10.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(30.0f, -10.0f, -10.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(30.0f, 20.0f, -10.0f);
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
-    glPopMatrix();
-
-    drawGun();
-
-    // Desenha o tiro
-    drawProjectiles();
-    moveProjectiles();
-
-    // Define a posição e o conteúdo do texto da pontuação
-    std::string scoreText = "POINTS: " + std::to_string(score); // Exemplo, substitua pela sua pontuação real
-    float textPosX = -4.75f;                                    // Posição X do texto no canto superior esquerdo
-    float textPosY = 2.5f;                                      // Posição Y do texto no canto superior esquerdo
-
-    // Desenha o texto da pontuação
-    glColor3f(1.0f, 1.0f, 1.0f); // Cor do texto (branco)
-    drawText(scoreText, textPosX, textPosY);
-    if (light)
-        glEnable(GL_LIGHTING); // Reativa a iluminação
-    glutSwapBuffers();
-}
-
-void reshape(int width, int height)
-{
-    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-0.1f, 0.1f, -0.1f * height / width, 0.1f * height / width, 0.1f, 100.0f); // para rodar no Windows
-    // gluPerspective(45, (GLfloat)width / (GLfloat)height, 0.1, 100.0);
-    glMatrixMode(GL_MODELVIEW);
 }
 
 void MouseOptions(int button, int state, int x, int y)
@@ -618,9 +517,92 @@ void MouseOptions(int button, int state, int x, int y)
     glutPostRedisplay();
 }
 
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    // Posiciona a c�mera - para rodar no Windows
+    glRotatef(0.0f, 1.0f, 0.0f, 0.0f); // Rota��o em torno do eixo X
+    glRotatef(0.0f, 0.0f, 1.0f, 0.0f); // Rota��o em torno do eixo Y
+    glTranslatef(0.0f, 0.0f, -6.0f);   // Transla��o ao longo do eixo Z negativo
+
+    // Verifica colis�es
+    checkCollisions();
+    checkCollisionPlayerCube();
+
+    // Desenha os cubos inimigos
+
+    drawCubes();
+    moveCubes();
+
+    // Desenha o cubo
+    drawCube();
+    moveCube();
+
+    glFlush();
+
+    if (light)
+        glDisable(GL_LIGHTING); // Desativa a iluminação temporariamente para renderizar os textos
+
+    // Desenha um chão branco
+    glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    GLuint texture;
+    texture = LoadTexture("grass.bmp");
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTranslatef(0.0f, -1.5f, -4.0f); // Posição do chão
+    if (!light)
+        glColor3f(0.8f, 1.0f, 0.8f);
+
+    //  Define as coordenadas de textura para cada vértice do retângulo
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-30.0f, 20.0f, -10.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-30.0f, -10.0f, -10.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(30.0f, -10.0f, -10.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(30.0f, 20.0f, -10.0f);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+
+    drawGun();
+
+    // Desenha o tiro
+    drawProjectiles();
+    moveProjectiles();
+
+    // Define a posição e o conteúdo do texto da pontuação
+    std::string scoreText = "POINTS: " + std::to_string(score); // Exemplo, substitua pela sua pontuação real
+    float textPosX = -4.75f;                                    // Posição X do texto no canto superior esquerdo
+    float textPosY = 2.5f;                                      // Posição Y do texto no canto superior esquerdo
+
+    // Desenha o texto da pontuação
+    glColor3f(1.0f, 1.0f, 1.0f); // Cor do texto (branco)
+    drawText(scoreText, textPosX, textPosY);
+    if (light)
+        glEnable(GL_LIGHTING); // Reativa a iluminação
+    glutSwapBuffers();
+}
+
+void reshape(int width, int height)
+{
+    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-0.1f, 0.1f, -0.1f * height / width, 0.1f * height / width, 0.1f, 100.0f); // para rodar no Windows
+    glMatrixMode(GL_MODELVIEW);
+}
+
 void init()
 {
-    // glEnable(GL_LIGHTING);          // Habilita a iluminação
     glEnable(GL_LIGHT0); // Habilita a fonte de luz 0       // Habilita o teste de profundidade
 
     // Define a posição da fonte de luz
@@ -645,6 +627,7 @@ void init()
     glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
 
+    // Configurações da textura
     glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
 
@@ -666,29 +649,21 @@ int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(1280, 720);
+    glutInitWindowSize(windowWidth, windowHeight);
     glutCreateWindow("Cubo M�gico");
     init();
     srand(time(NULL));
-    // Cor do cubo
     glutIdleFunc(rainbowEffect);
     init();
-    // Movimento e tiro
-    // Registra as fun��es de callback para as teclas pressionadas e liberadas
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
     glutMouseFunc(MouseOptions);
-    // Chame a fun��o de temporiza��o para iniciar o controle de FPS
     glutTimerFunc(0, timer, 0);
-    // Pegar as coordenadas do mouse passivamente
     glutPassiveMotionFunc(passiveMotion);
-    // Aparecer na tela
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     initializeCubes();
     glEnable(GL_DEPTH_TEST);
-
     glutMainLoop();
-
     return 0;
 }
